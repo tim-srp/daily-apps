@@ -1,0 +1,57 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>爆款标题生成器 · 每日一个有用小工具</title><style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:-apple-system,"PingFang SC","Noto Sans CJK SC",sans-serif;color:#f4f4ff;min-height:100vh;
+background:radial-gradient(circle at 10% 0%,#7c3aed66,transparent 45%),radial-gradient(circle at 100% 30%,#ec489944,transparent 40%),radial-gradient(circle at 50% 100%,#06b6d433,transparent 50%),#090914}
+.w{max-width:480px;margin:0 auto;padding:22px 16px 60px}
+.tag{display:inline-block;font-size:12px;padding:4px 10px;border-radius:99px;background:#ffffff14;border:1px solid #ffffff22;color:#c4b5fd}
+h1{font-size:30px;margin:12px 0 4px;background:linear-gradient(90deg,#fff,#c4b5fd 50%,#f9a8d4);-webkit-background-clip:text;color:transparent}
+.sub{color:#9a9ab8;font-size:14px;margin-bottom:18px}
+.card{background:#ffffff0b;border:1px solid #ffffff1a;border-radius:20px;padding:16px;backdrop-filter:blur(16px)}
+label{font-size:13px;color:#b9b9d6;display:block;margin:4px 0 8px}
+textarea,input{width:100%;background:#00000035;border:1px solid #ffffff22;border-radius:14px;color:#fff;font-size:16px;padding:12px;font-family:inherit;outline:none;resize:none}
+textarea:focus,input:focus{border-color:#a78bfa;box-shadow:0 0 0 3px #a78bfa33}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.chip{padding:8px 14px;border-radius:99px;border:1px solid #ffffff22;background:#ffffff08;font-size:14px;cursor:pointer;transition:.2s;user-select:none}
+.chip.on{background:linear-gradient(90deg,#8b5cf6,#ec4899);border-color:transparent;transform:scale(1.04);box-shadow:0 4px 18px #ec489955}
+.go{width:100%;margin-top:6px;padding:16px;border:0;border-radius:16px;font-size:18px;font-weight:800;color:#fff;cursor:pointer;
+background:linear-gradient(90deg,#8b5cf6,#ec4899,#f59e0b);background-size:200%;animation:sh 4s linear infinite;box-shadow:0 8px 30px #8b5cf655}
+.go:active{transform:scale(.98)}@keyframes sh{to{background-position:200%}}
+.res{margin-top:18px;display:flex;flex-direction:column;gap:10px}
+.it{display:flex;gap:10px;align-items:flex-start;padding:14px;border-radius:16px;background:#ffffff0d;border:1px solid #ffffff18;opacity:0;transform:translateY(14px);animation:up .45s forwards}
+@keyframes up{to{opacity:1;transform:none}}
+.no{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:800;background:linear-gradient(135deg,#8b5cf6,#ec4899)}
+.tx{flex:1;font-size:16px;line-height:1.5}.why{display:inline-block;margin-top:6px;font-size:12px;color:#fcd34d;background:#f59e0b1f;border-radius:6px;padding:2px 8px}
+.cp{flex:none;border:1px solid #ffffff2a;background:#ffffff10;color:#fff;border-radius:10px;padding:7px 10px;font-size:13px;cursor:pointer}
+.cp.ok{background:#10b981;border-color:#10b981}
+.toast{position:fixed;left:50%;bottom:40px;transform:translate(-50%,30px);opacity:0;background:#10b981;padding:10px 18px;border-radius:99px;font-size:14px;transition:.3s}
+.toast.on{opacity:1;transform:translate(-50%,0)}.ft{text-align:center;color:#6b6b88;font-size:12px;margin-top:26px}.ft a{color:#a78bfa}
+.sk{height:62px;border-radius:16px;background:linear-gradient(90deg,#ffffff08,#ffffff18,#ffffff08);background-size:200%;animation:sh 1.2s linear infinite}
+</style></head><body><div class="w">
+<span class="tag">每日一个有用小工具 · Day 1</span><h1>爆款标题生成器</h1><div class="sub">3 秒给你 10 个标题 · 10 headlines in 3 seconds</div>
+<div class="card">
+<label>你的主题 / 文章要点</label><textarea id="topic" rows="2" placeholder="例如：用 AI 做副业"></textarea>
+<label style="margin-top:12px">目标人群（可选）</label><input id="aud" placeholder="例如：打工人 / 宝妈 / 学生">
+<label style="margin-top:14px">发布平台</label><div class="chips" id="plat"><span class="chip on">X</span><span class="chip">小红书</span><span class="chip">公众号</span><span class="chip">抖音</span></div>
+<label>标题风格</label><div class="chips" id="sty"><span class="chip on">混合</span><span class="chip">好奇</span><span class="chip">干货</span><span class="chip">数字</span><span class="chip">反差</span><span class="chip">情绪</span></div>
+<button class="go" id="go">⚡ 生成 10 个标题</button></div>
+<div class="res" id="res"></div>
+<div class="ft">基于 40+ 条经过验证的爆款标题公式 · <a href="logout">退出</a><br>私信 @STim181192 获取更多小工具</div></div>
+<div class="toast" id="toast">✅ 已复制</div>
+<script>
+const $=id=>document.getElementById(id);
+document.querySelectorAll('.chips').forEach(g=>g.onclick=e=>{if(!e.target.classList.contains('chip'))return;g.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));e.target.classList.add('on')});
+const val=id=>$(id).querySelector('.on').textContent;
+function toast(){const t=$('toast');t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1200)}
+async function copy(s,btn){try{await navigator.clipboard.writeText(s)}catch(e){const a=document.createElement('textarea');a.value=s;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}
+btn.textContent='已复制';btn.classList.add('ok');toast();setTimeout(()=>{btn.textContent='复制';btn.classList.remove('ok')},1500)}
+$('go').onclick=async()=>{const topic=$('topic').value.trim();if(!topic){$('topic').focus();return}
+const r=$('res');r.innerHTML='<div class="sk"></div>'.repeat(4);
+const res=await fetch('api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic,audience:$('aud').value,platform:val('plat'),style:val('sty')})});
+const j=await res.json();await new Promise(z=>setTimeout(z,500));
+if(!res.ok){r.innerHTML='<div class="it" style="color:#f87171">'+(j.error||'出错了')+'</div>';if(res.status==401)setTimeout(()=>location.reload(),1200);return}
+r.innerHTML='';j.titles.forEach((x,i)=>{const d=document.createElement('div');d.className='it';d.style.animationDelay=(i*70)+'ms';
+d.innerHTML=`<div class="no">${i+1}</div><div class="tx"></div><button class="cp">复制</button>`;d.querySelector('.tx').textContent=x.t;
+const w=document.createElement('div');w.className='why';w.textContent='💡 '+x.why;d.querySelector('.tx').appendChild(w);
+d.querySelector('.cp').onclick=e=>copy(x.t,e.target);r.appendChild(d)})};
+</script></body></html>

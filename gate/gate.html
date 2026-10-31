@@ -1,0 +1,15 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{NAME}} · 输入体验码</title><style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:-apple-system,"PingFang SC","Noto Sans CJK SC",sans-serif;color:#fff;
+background:radial-gradient(circle at 20% 10%,#7c3aed55,transparent 50%),radial-gradient(circle at 90% 90%,#ec489955,transparent 50%),#0b0b16}
+.c{width:min(92vw,380px);padding:32px 24px;border-radius:24px;background:#ffffff0d;border:1px solid #ffffff1f;backdrop-filter:blur(20px);text-align:center;animation:in .6s ease}
+@keyframes in{from{opacity:0;transform:translateY(20px)}}
+h1{font-size:22px;margin:8px 0}.s{color:#a5a5c0;font-size:14px;line-height:1.6}
+input{width:100%;margin:20px 0 12px;padding:16px;font-size:22px;letter-spacing:6px;text-align:center;text-transform:uppercase;border-radius:14px;border:1px solid #ffffff2a;background:#00000040;color:#fff;outline:none}
+input:focus{border-color:#a78bfa}button{width:100%;padding:15px;border:0;border-radius:14px;font-size:17px;font-weight:700;color:#fff;background:linear-gradient(90deg,#8b5cf6,#ec4899);cursor:pointer}
+.e{color:#f87171;min-height:20px;font-size:14px;margin-top:10px}a{color:#c4b5fd}</style></head><body>
+<div class="c"><div style="font-size:40px">🔐</div><h1>{{NAME}}</h1><div class="s">输入体验码即可使用<br>私信 <a href="https://x.com/STim181192">@STim181192</a> 领取限时体验码<br><small>DM @STim181192 for a trial code</small></div>
+<input id="k" maxlength="12" placeholder="XXXXXXXX" autocomplete="off"><button id="b">进入</button><div class="e" id="e"></div></div>
+<script>const b=document.getElementById('b'),k=document.getElementById('k'),e=document.getElementById('e');
+async function go(){e.textContent='';b.disabled=true;try{const r=await fetch('/{{APP}}/enter',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:k.value})});const j=await r.json();if(j.ok)location.reload();else e.textContent=j.error||'验证失败'}catch(x){e.textContent='网络错误'}b.disabled=false}
+b.onclick=go;k.onkeydown=ev=>{if(ev.key==='Enter')go()}</script></body></html>
