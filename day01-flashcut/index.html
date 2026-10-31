@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a12">
+<title>闪剪台 · 浏览器多轨短视频剪辑</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">✂</span>
+      <div>
+        <h1>闪剪台</h1>
+        <p class="tagline">浏览器里的多轨短视频剪辑台 · Day 1</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <label class="btn ghost" for="fileIn" title="导入本地素材（不上传）">
+        <input type="file" id="fileIn" accept="video/*,audio/*,image/*" multiple hidden>
+        ＋ 导入素材
+      </label>
+      <button type="button" class="btn primary" id="btnExport" disabled>导出成片</button>
+      <a class="btn quiet" href="logout" title="退出体验">退出</a>
+    </div>
+  </header>
+
+  <div class="hint-bar" id="hintBar">
+    💡 建议每次导入 <strong>2–3 个短片段</strong>（合计约 30 秒内），导出在浏览器本地完成，素材不会上传服务器。
+  </div>
+
+  <main class="workspace">
+    <!-- Media library -->
+    <aside class="panel library" aria-label="素材库">
+      <div class="panel-hd">
+        <h2>素材库</h2>
+        <span class="muted" id="libCount">0</span>
+      </div>
+      <div class="lib-list" id="libList"></div>
+    </aside>
+
+    <!-- Preview -->
+    <section class="panel preview" aria-label="预览">
+      <div class="stage-wrap">
+        <canvas id="stage" width="720" height="1280" aria-label="预览画布"></canvas>
+        <div class="stage-empty" id="stageEmpty">预览区</div>
+      </div>
+      <div class="transport">
+        <button type="button" class="icon-btn" id="btnToStart" title="回到开头">⏮</button>
+        <button type="button" class="icon-btn play" id="btnPlay" title="播放 / 暂停（空格）">▶</button>
+        <span class="timecode" id="timecode">00:00.0 / 00:00.0</span>
+        <label class="trans-label">转场
+          <select id="transSelect" title="新视频片段默认转场">
+            <option value="cut">硬切</option>
+            <option value="crossfade">交叉溶解</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <!-- Inspector -->
+    <aside class="panel inspector" aria-label="属性">
+      <div class="panel-hd"><h2>属性</h2></div>
+      <div id="inspector" class="insp-body">
+        <p class="muted center">选中时间轴上的片段以编辑入出点、时长或字幕文案</p>
+      </div>
+      <div class="insp-actions">
+        <button type="button" class="btn ghost full" id="btnAddSub">＋ 添加字幕</button>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Timeline -->
+  <section class="timeline" aria-label="时间轴">
+    <div class="tl-toolbar">
+      <span class="tl-title">时间轴</span>
+      <div class="tl-zoom">
+        <button type="button" class="icon-btn sm" id="zoomOut" title="缩小">−</button>
+        <button type="button" class="icon-btn sm" id="zoomIn" title="放大">＋</button>
+      </div>
+      <button type="button" class="btn ghost sm" id="btnDelete" disabled>删除选中</button>
+    </div>
+    <div class="tl-scroll" id="tlScroll">
+      <div class="tl-inner" id="tlInner">
+        <div class="tl-ruler" id="tlRuler"></div>
+        <div class="tl-track" data-track="video">
+          <div class="tl-label">视频 V1</div>
+          <div class="tl-lane" id="laneVideo"></div>
+        </div>
+        <div class="tl-track" data-track="audio">
+          <div class="tl-label">音频 A1</div>
+          <div class="tl-lane" id="laneAudio"></div>
+        </div>
+        <div class="tl-track" data-track="subtitle">
+          <div class="tl-label">字幕 S1</div>
+          <div class="tl-lane" id="laneSub"></div>
+        </div>
+        <div class="playhead" id="playhead"><div class="ph-head"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Empty state overlay -->
+  <div class="empty" id="emptyState">
+    <div class="empty-card">
+      <div class="empty-badge">闪剪台 FlashCut</div>
+      <h2>三步做出第一条短视频</h2>
+      <ol class="steps">
+        <li><span class="n">1</span><div><strong>导入素材</strong><p>从相册或文件夹选择视频、图片或 BGM，全部留在本机，不上传。</p></div></li>
+        <li><span class="n">2</span><div><strong>多轨剪辑</strong><p>拖到时间轴：裁剪入出点、排顺序、加中文字幕与交叉溶解转场。</p></div></li>
+        <li><span class="n">3</span><div><strong>导出成片</strong><p>一键用浏览器内 ffmpeg 渲染 WebM，可带进度条下载。</p></div></li>
+      </ol>
+      <label class="btn primary lg" for="fileIn2">
+        <input type="file" id="fileIn2" accept="video/*,audio/*,image/*" multiple hidden>
+        开始导入素材
+      </label>
+      <p class="empty-note">建议 2–3 个短片段 · Chrome / Edge / Safari 17+ 体验最佳</p>
+    </div>
+  </div>
+
+  <!-- Export modal -->
+  <div class="modal hidden" id="exportModal" role="dialog" aria-modal="true" aria-labelledby="exTitle">
+    <div class="modal-card">
+      <h3 id="exTitle">导出成片</h3>
+      <p class="muted" id="exStatus">正在准备 ffmpeg 引擎…</p>
+      <div class="progress"><div class="bar" id="exBar"></div></div>
+      <p class="pct" id="exPct">0%</p>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" id="btnExCancel">取消</button>
+        <a class="btn primary hidden" id="btnExDownload" download="flashcut.webm">下载成片</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

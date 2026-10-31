@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """One process serving all daily apps. Each app = folder dayNN-*/ with app.json {"path":"d01","name":..}
-static index.html and optional api.py exposing handle(payload)->dict (POST /dNN/api)."""
-import os, json, glob, importlib.util, http.cookies, re, time
+static files (index.html, *.js, *.css, …) and optional api.py exposing handle(payload)->dict (POST /dNN/api)."""
+import os, json, glob, importlib.util, http.cookies, re, time, mimetypes
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import gate
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -15,6 +15,15 @@ for f in sorted(glob.glob(os.path.join(BASE, "day*", "app.json"))):
 GATE_HTML = open(os.path.join(BASE, "gate", "gate.html"), encoding="utf-8").read()
 BYPASS = os.environ.get("GATE_LOCAL_BYPASS") == "1"  # only honoured for 127.0.0.1 requests w/o proxy headers (demo recording)
 _ip_hits = {}
+
+# Extra MIME types browsers care about for ES modules / wasm
+mimetypes.add_type("application/javascript", ".js")
+mimetypes.add_type("text/css", ".css")
+mimetypes.add_type("application/wasm", ".wasm")
+mimetypes.add_type("application/json", ".json")
+mimetypes.add_type("image/svg+xml", ".svg")
+
+SAFE_STATIC = re.compile(r"^/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)*$")
 
 class H(BaseHTTPRequestHandler):
     server_version = "daily-apps"
@@ -36,21 +45,37 @@ class H(BaseHTTPRequestHandler):
         c = http.cookies.SimpleCookie(self.headers.get("Cookie", ""))
         code = gate.unsign(c["dg"].value) if "dg" in c else None
         return code if code and gate.check(code, app["path"])[0] else None
+    def safe_file(self, app, sub):
+        """Resolve a static file under the app dir; None if missing or unsafe."""
+        if sub in ("", "/"): return None
+        if not SAFE_STATIC.match(sub): return None
+        root = os.path.realpath(app["dir"])
+        fpath = os.path.realpath(os.path.join(root, sub.lstrip("/")))
+        if not fpath.startswith(root + os.sep): return None
+        if not os.path.isfile(fpath): return None
+        return fpath
     def do_GET(self):
         if self.path in ("/", ""):
             return self.send(200, "<meta charset=utf-8><h3>每日一个有用小工具</h3>" + "".join(f'<p><a href="/{k}/">{v["name"]}</a></p>' for k, v in APPS.items()))
         app, sub = self.route()
         if not app: return self.send(404, "not found", "text/plain")
-        if sub == "" or not self.path.split("?")[0].endswith("/") and sub == "/":
-            pass
         if self.path.rstrip("/") == "/" + app["path"] and not self.path.endswith("/"):
             self.send_response(302); self.send_header("Location", "/" + app["path"] + "/"); self.end_headers(); return
+        if sub == "/logout":
+            return self.send(302, "", headers=[("Location", f"/{app['path']}/"), ("Set-Cookie", f"dg=; Path=/; Max-Age=0")])
         if sub == "/":
             if not self.session(app):
                 return self.send(200, GATE_HTML.replace("{{APP}}", app["path"]).replace("{{NAME}}", app["name"]))
             return self.send(200, open(os.path.join(app["dir"], "index.html"), "rb").read())
-        if sub == "/logout":
-            return self.send(302, "", headers=[("Location", f"/{app['path']}/"), ("Set-Cookie", f"dg=; Path=/; Max-Age=0")])
+        # Authenticated static assets for the app (js/css/images/…)
+        fpath = self.safe_file(app, sub)
+        if fpath:
+            if not self.session(app):
+                return self.send(401, "需要体验码", "text/plain")
+            ctype = mimetypes.guess_type(fpath)[0] or "application/octet-stream"
+            if ctype.startswith("text/") or ctype in ("application/javascript", "application/json"):
+                ctype = ctype + "; charset=utf-8"
+            return self.send(200, open(fpath, "rb").read(), ctype)
         return self.send(404, "not found", "text/plain")
     def body(self):
         n = min(int(self.headers.get("Content-Length") or 0), 20000)
