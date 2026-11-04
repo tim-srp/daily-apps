@@ -67,6 +67,9 @@ class H(BaseHTTPRequestHandler):
             if not self.session(app):
                 return self.send(200, GATE_HTML.replace("{{APP}}", app["path"]).replace("{{NAME}}", app["name"]))
             return self.send(200, open(os.path.join(app["dir"], "index.html"), "rb").read())
+        if sub == "/status" and "api" in app and hasattr(app["api"], "status"):
+            if not self.session(app): return self.jsend(401, {"error": "需要体验码"})
+            return self.jsend(200, app["api"].status())
         # Authenticated static assets for the app (js/css/images/…)
         fpath = self.safe_file(app, sub)
         if fpath:
@@ -77,8 +80,8 @@ class H(BaseHTTPRequestHandler):
                 ctype = ctype + "; charset=utf-8"
             return self.send(200, open(fpath, "rb").read(), ctype)
         return self.send(404, "not found", "text/plain")
-    def body(self):
-        n = min(int(self.headers.get("Content-Length") or 0), 20000)
+    def body(self, cap=20000):
+        n = min(int(self.headers.get("Content-Length") or 0), cap)
         try: return json.loads(self.rfile.read(n) or b"{}")
         except Exception: return {}
     def do_POST(self):
@@ -102,6 +105,26 @@ class H(BaseHTTPRequestHandler):
             if "api" not in app: return self.jsend(404, {"error": "no api"})
             try: return self.jsend(200, app["api"].handle(self.body()))
             except Exception as e: return self.jsend(500, {"error": "生成失败"})
+        if sub == "/stream":
+            # Optional SSE endpoint: api.py may expose stream(payload, emit); emit(event, obj) writes one SSE frame.
+            code = self.session(app)
+            if not code: return self.jsend(401, {"error": "需要体验码"})
+            if "api" not in app or not hasattr(app["api"], "stream"): return self.jsend(404, {"error": "no stream"})
+            payload = self.body(400000)
+            if code != "LOCALDEMO":
+                ok, why = gate.consume(code, app["path"])
+                if not ok: return self.jsend(429, {"error": why})
+            self.send_response(200); self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+            self.send_header("Cache-Control", "no-store"); self.send_header("X-Accel-Buffering", "no"); self.send_header("Connection", "close")
+            self.end_headers(); self.close_connection = True
+            def emit(ev, obj):
+                self.wfile.write(f"event: {ev}\ndata: {json.dumps(obj, ensure_ascii=False)}\n\n".encode()); self.wfile.flush()
+            try: app["api"].stream(payload, emit)
+            except (BrokenPipeError, ConnectionResetError): pass
+            except Exception as e:
+                try: emit("error", {"message": "生成失败：" + str(e)[:200]})
+                except Exception: pass
+            return
         return self.jsend(404, {"error": "not found"})
 
 if __name__ == "__main__":

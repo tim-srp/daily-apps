@@ -1,0 +1,74 @@
+<!doctype html><html lang="zh" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>投放参谋 AdPilot · 广告创意与报表 Agent</title><link rel="stylesheet" href="styles.css"></head><body>
+<div class="app">
+<aside class="side">
+  <div class="logo"><div class="mark">参</div><div><b>投放参谋</b><small>AdPilot · 创意与报表 Agent</small></div></div>
+  <nav id="nav">
+    <button data-tab="creative" class="on"><i>✦</i>创意方案</button>
+    <button data-tab="matrix"><i>▦</i>A/B 实验矩阵</button>
+    <button data-tab="report"><i>▲</i>报表解读</button>
+    <button data-tab="projects"><i>▤</i>项目空间 <span id="projCount" class="pill"></span></button>
+  </nav>
+  <div class="client"><label>当前客户</label><div class="row"><select id="client"></select><button id="addClient" class="ghost sm" title="新建客户">＋</button></div></div>
+  <div class="sidefoot"><div id="modeBadge" class="mode">检测中…</div>
+    <div class="row"><button id="theme" class="ghost sm">◐ 主题</button><a class="ghost sm btnlink" href="logout">退出</a></div></div>
+</aside>
+<main id="main">
+<!-- 创意方案 -->
+<section id="tab-creative" class="tab on">
+  <header class="hd"><div><h1>创意方案</h1><p>输入品牌与投放条件，Agent 产出洞察、创意角度、分镜脚本和分渠道文案（自动校验字数上限）。</p></div>
+    <div class="acts"><button class="ghost" id="cr-fill">填入示例</button></div></header>
+  <div class="grid2">
+    <form id="cr-form" class="card form">
+      <div class="f2"><label>品牌<input name="brand" placeholder="如：轻研所" required></label><label>产品<input name="product" placeholder="如：氨基酸洁面慕斯 150ml" required></label></div>
+      <label>核心卖点 / 证据<textarea name="points" rows="2" placeholder="如：氨基酸表活、pH 5.5、按压出泡、首单 59 元"></textarea></label>
+      <label>目标人群<input name="audience" placeholder="如：22-30 岁一二线通勤女性，敏感肌"></label>
+      <label>投放渠道（可多选）<div class="chips" id="cr-ch"></div></label>
+      <div class="f3"><label>投放目标<select name="goal"><option>转化/成交</option><option>拉新获客</option><option>直播间引流</option><option>品牌曝光</option><option>留资/线索</option><option>App 下载</option></select></label>
+        <label>预算<input name="budget" placeholder="如：日耗 5000 元"></label>
+        <label>语气<select name="tone"><option>真诚口语</option><option>专业成分党</option><option>活泼种草</option><option>高级克制</option><option>强促销</option></select></label></div>
+      <label>补充要求<input name="extra" placeholder="如：避免对比竞品；需要达人口播版本"></label>
+      <button class="primary" id="cr-go">✦ 生成创意方案</button>
+    </form>
+    <div class="card run" id="cr-run"><div class="empty">生成过程会在这里实时展示：Agent 每一步在做什么。</div></div>
+  </div>
+  <div id="cr-out"></div>
+</section>
+<!-- A/B -->
+<section id="tab-matrix" class="tab">
+  <header class="hd"><div><h1>A/B 实验矩阵</h1><p>样本量与预算按两比例检验公式在本地精确计算；Agent 负责变量拆解、假设和执行设计。</p></div></header>
+  <div class="grid2">
+    <form id="mx-form" class="card form">
+      <label>测试的创意角度（逗号分隔，可从创意方案勾选带入）<input name="angles" placeholder="痛点放大, 成分党背书, 场景对比"></label>
+      <div class="f3"><label>主指标<select name="metric"><option value="CTR">CTR（点击率）</option><option value="CVR">CVR（转化率）</option></select></label>
+        <label>基线值 %<input name="base" type="number" step="0.01" value="2.0"></label>
+        <label>最小可检测提升 %<input name="mde" type="number" step="1" value="20"></label></div>
+      <div class="f3"><label><span id="mx-costlab">CPM（元/千次展示）</span><input name="unit" type="number" step="0.1" value="40"></label>
+        <label>每日测试预算（元）<input name="daily" type="number" value="3000"></label>
+        <label>显著性 / 功效<select name="sig"><option value="0.05|0.8">95% / 80%</option><option value="0.1|0.8">90% / 80%（更快）</option><option value="0.05|0.9">95% / 90%（更稳）</option></select></label></div>
+      <div id="mx-calc" class="calc"></div>
+      <button class="primary" id="mx-go">▦ 生成实验矩阵</button>
+    </form>
+    <div class="card run" id="mx-run"><div class="empty">提示：CTR 测试按展示量计样本，CVR 测试按点击量计样本。</div></div>
+  </div>
+  <div id="mx-out"></div>
+</section>
+<!-- 报表 -->
+<section id="tab-report" class="tab">
+  <header class="hd"><div><h1>报表解读</h1><p>上传巨量引擎 / 千川 / 腾讯广告 / Meta / Google 导出的 CSV 或 XLSX。指标在浏览器本地计算，原始数据不上传。</p></div></header>
+  <div class="card drop" id="rp-drop"><input type="file" id="rp-file" accept=".csv,.tsv,.txt,.xlsx,.xls" hidden>
+    <div><b>拖入报表文件</b>，或 <button class="ghost sm" id="rp-pick">选择文件</button></div>
+    <div class="samples">试试示例数据：<button class="ghost sm" data-sample="sample-qianchuan.csv">千川/巨量 · 洁面品牌 28 天</button><button class="ghost sm" data-sample="sample-meta.csv">Meta · 独立站 28 天</button></div></div>
+  <div id="rp-map"></div><div id="rp-dash"></div>
+  <div class="grid2 rp-ai" id="rp-aiwrap" hidden><div class="card run" id="rp-run"></div><div></div></div>
+  <div id="rp-out"></div>
+</section>
+<!-- 项目 -->
+<section id="tab-projects" class="tab">
+  <header class="hd"><div><h1>项目空间</h1><p>按客户保存方案、实验与报表解读（保存在本浏览器）。可导出 Markdown 或打印为 PDF。</p></div>
+    <div class="acts"><button class="ghost" id="pj-md">导出全部 Markdown</button></div></header>
+  <div id="pj-list"></div>
+</section>
+</main></div>
+<div id="toast"></div><div id="print"></div>
+<script src="metrics.js"></script><script src="app.js"></script></body></html>

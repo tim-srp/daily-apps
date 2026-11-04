@@ -9,11 +9,15 @@ daily-apps/
   url.sh           # prints current trycloudflare URL
   data/gate.db     # codes + usage + cookie secret (keep private)
   logs/
+  day02-adpilot/   # 投放参谋 — 创意方案 / A/B 矩阵 / 报表解读 Agent（ZooWork）
   day01-flashcut/  # 闪剪台 — browser multi-track editor (static: index.html, app.js, styles.css, export.js)
 ```
 
 ## Day 1 — 闪剪台 / FlashCut
 Browser-native multi-track short video editor at `/d01/`. Media never uploads; export uses **ffmpeg.wasm** from jsDelivr CDN (see `day01-flashcut/README.md`).
+
+## Day 2 — 投放参谋 / AdPilot
+Ad creative + A/B matrix + report interpretation agent at `/d02/`. Real mode needs `ZOOWORK_API_KEY` (optional `ZOOWORK_AGENT_ID`, `ZOOWORK_BASE_URL`); otherwise labelled demo mode. See `day02-adpilot/README.md`.
 
 ## Access codes
 - `./mint_code.py --hours 72 --uses 3 --cap 50 --note @handle [--apps d01,d02]` → 8-char code.
